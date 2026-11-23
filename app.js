@@ -20,7 +20,11 @@ const terrainTextures = {
 };
 
 const terrainPatterns = {};
-let selectedTerrain = "terrain1";
+let selectedBrush = {
+    type: "",
+    value: ""
+};
+
 
 Object.entries(terrainTextures).forEach(([key, path]) => {
     const image = new Image();
@@ -54,7 +58,10 @@ buttonGroups.addEventListener("click", (e) => {
         return;
     }
 
-    selectedTerrain = terrainId;
+    selectedBrush = {
+        type: "terrain",
+        value: terrainId
+    };
 
     buttonGroups.querySelectorAll("button").forEach((btn) => {
         btn.classList.toggle("active", btn.id === terrainId);
@@ -73,7 +80,7 @@ function getMousePosition(e) {
 
 // Start painting
 canvas.addEventListener("mousedown", (e) => {
-    const pattern = terrainPatterns[selectedTerrain];
+    const pattern = getBrushStyle();
 
     if (!pattern) return;
 
@@ -87,7 +94,7 @@ canvas.addEventListener("mousedown", (e) => {
     ctx.lineWidth = lineWidth;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.strokeStyle = terrainPatterns[selectedTerrain];
+    ctx.strokeStyle = pattern;
 
     // Draw a dot for single clicks
     ctx.lineTo(x, y);
@@ -96,8 +103,7 @@ canvas.addEventListener("mousedown", (e) => {
 
 // Draw terrain
 canvas.addEventListener("mousemove", (e) => {
-    const pattern = terrainPatterns[selectedTerrain];
-    if (!isPainting || !pattern) return;
+    if (!isPainting) return;
 
     const { x, y } = getMousePosition(e);
 
@@ -126,10 +132,29 @@ toolbar.addEventListener("click", (e) => {
 
 toolbar.addEventListener("change", (e) => {
     if (e.target.id === "stroke") {
-        ctx.strokeStyle = e.target.value;
+        selectedBrush = {
+            type: "color",
+            value: e.target.value
+        };
+        
+        buttonGroups.querySelectorAll("button").forEach((btn) => {
+            btn.classList.remove("active");
+        });
     }
 
     if (e.target.id === "lineWidth") {
         lineWidth = Number(e.target.value);
     }
 });
+
+function getBrushStyle() {
+    if (selectedBrush.type === "terrain") {
+        return terrainPatterns[selectedBrush.value] ?? null;
+    }
+
+    if (selectedBrush.type === "color") {
+        return selectedBrush.value;
+    }
+
+    return null;
+}
